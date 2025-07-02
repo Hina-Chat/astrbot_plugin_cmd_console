@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Astrbot Cmd Console</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <style>
+        /* Custom Styles for Bulma */
+        html {
+            background-color: #262626; /* Dark background for the whole page */
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #262626;
+        }
+        .container {
+            max-width: 960px;
+        }
+        .hero.is-dark {
+            background-color: #363636;
+        }
+        .box {
+            background-color: #3a3a3a;
+        }
+        .card {
+            background-color: #4a4a4a;
+            color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .card-header {
+            background-color: #3d3d3d;
+            cursor: pointer;
+            user-select: none;
+        }
+        .card-header-title {
+            color: #fff;
+            align-items: center;
+        }
+        .card-toggle-icon {
+            display: inline-block;
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            width: 0.75em;
+            height: 0.75em;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            padding: 3px;
+            transform: rotate(45deg);
+        }
+        .card-toggle-icon.is-active {
+            transform: rotate(-135deg);
+            margin-top: 5px; /* Adjust position when rotated */
+        }
+        .card-content {
+            background-color: #3a3a3a;
+        }
+        .table {
+            background-color: #424242;
+            color: #fff;
+        }
+        .table thead td, .table thead th {
+            color: #e0e0e0;
+            border-color: #555;
+        }
+        .table tbody tr:hover {
+            background-color: #4a4a4a !important;
+        }
+        .table, .table td, .table th, .table tr {
+            border-color: #555;
+        }
+        .label, .has-text-light .label, .title, .subtitle, .has-text-light {
+            color: #e0e0e0;
+        }
+        .input, .textarea {
+            background-color: #2e2e2e;
+            border-color: #555;
+            color: #fff;
+        }
+        .input::placeholder, .textarea::placeholder {
+            color: #888;
+        }
+        code {
+            background-color: #1e1e1e; /* VSCode dark theme background */
+            color: #ffffffdc; /* Light blue for code text */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 3px;
+        }
+        /* Custom Switch */
+        .switch {
+            position: relative; display: inline-block; width: 50px; height: 28px; vertical-align: middle;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #666; transition: .4s; border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #485fc7; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        /* Notification Toast */
+        #toast-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 320px;
+        }
+        #loader {
+            text-align: center; padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <div class="has-text-centered mb-6">
+                <p class="title is-2 has-text-light">Astrbot Cmd Console</p>
+                <p class="subtitle is-5 has-text-grey-light">為 Astrbot 提供的指令管理工具</p>
+            </div>
+
+            <div id="login-section" class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box">
+                        <form id="login-form">
+                            <div class="field">
+                                <label class="label has-text-light">登入權杖</label>
+                                <div class="control">
+                                    <input class="input is-medium" type="password" id="token" name="token" placeholder="請輸入從 Bot 私訊中獲取的 Token" required>
+                                </div>
+                                <p class="help has-text-grey-light">請在 Bot 中使用 <code>/cmdmgr on</code> 指令獲取一次性權杖。</p>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <button type="submit" id="login-button" class="button is-primary is-fullwidth is-medium">驗證並登入</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <section id="main-section" style="display: none;">
+                <div class="columns is-centered">
+                    <div class="column is-four-fifths">
+                        <div class="level mb-5">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <p class="subtitle is-5 has-text-light">登入成功。登出時，請使用 <code>/cmdmgr off</code> 指令關閉埠。</p>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button id="logout-button" class="button is-light is-outlined">登出</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="loader" class="has-text-centered" style="display: none;">
+                            <button class="button is-loading is-large is-text">Loading</button>
+                        </div>
+                        <div id="commands-container"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+    <div id="toast-container"></div>
+
+    <script>
+        const loginSection = document.getElementById('login-section');
+        const mainSection = document.getElementById('main-section');
+        const loginForm = document.getElementById('login-form');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const tokenInput = document.getElementById('token');
+        const loader = document.getElementById('loader');
+        const commandsContainer = document.getElementById('commands-container');
+        const toastContainer = document.getElementById('toast-container');
+
+        const API_BASE = '/api';
+
+        async function apiFetch(url, options = {}) {
+            const token = sessionStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(API_BASE + url, { ...options, headers });
+
+            if (response.status === 401) {
+                sessionStorage.removeItem('authToken');
+                showLogin();
+                showToast('驗證失敗或權杖已過期，請重新登入。', 'is-danger');
+                throw new Error('Unauthorized');
+            }
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: '未知錯誤' }));
+                throw new Error(errorData.detail || '請求失敗');
+            }
+            return response.json();
+        }
+
+        function showToast(message, type = 'is-success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<button class="delete"></button>${message}`;
+            
+            toastContainer.appendChild(notification);
+
+            const deleteButton = notification.querySelector('.delete');
+            const removeToast = () => notification.remove();
+            deleteButton.addEventListener('click', removeToast);
+
+            setTimeout(removeToast, 5000);
+        }
+
+        function renderGroupedCommands(commands) {
+            if (commands.length === 0) {
+                commandsContainer.innerHTML = '<div class="notification is-warning">未找到任何指令。</div>';
+                return;
+            }
+
+            const groupedCommands = commands.reduce((acc, cmd) => {
+                if (!acc[cmd.plugin_name]) {
+                    acc[cmd.plugin_name] = [];
+                }
+                acc[cmd.plugin_name].push(cmd);
+                return acc;
+            }, {});
+
+            commandsContainer.innerHTML = '';
+
+            for (const pluginName in groupedCommands) {
+                const card = document.createElement('div');
+                card.className = 'card mb-4';
+
+                card.innerHTML = `
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            ${pluginName}
+                            <span class="card-toggle-icon"></span>
+                        </p>
+                        <div class="card-header-icon">
+                            <div class="buttons">
+                                <button class="button is-small is-success is-outlined" data-plugin="${pluginName}" data-action="enable">全部启用</button>
+                                <button class="button is-small is-danger is-outlined" data-plugin="${pluginName}" data-action="disable">全部禁用</button>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="card-content is-hidden">
+                        <div class="content">
+                            <table class="table is-fullwidth is-hoverable">
+                                <tbody>
+                                    ${groupedCommands[pluginName].map(cmd => `
+                                        <tr data-handler="${cmd.handler_full_name}">
+                                            <td><strong><code>${cmd.command}</code></strong><br><small class="has-text-grey">${cmd.description}</small></td>
+                                            <td style="width: 80px; text-align: center;">
+                                                <label class="switch">
+                                                    <input type="checkbox" ${cmd.activated ? 'checked' : ''}>
+                                                    <span class="slider"></span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                commandsContainer.appendChild(card);
+
+                const header = card.querySelector('.card-header');
+                const content = card.querySelector('.card-content');
+                const icon = card.querySelector('.card-toggle-icon');
+
+                header.addEventListener('click', (e) => {
+                    // Only toggle if the click is on the header itself, not on the buttons inside
+                    if (e.target.closest('.card-header-title') || e.target.classList.contains('card-header')) {
+                        content.classList.toggle('is-hidden');
+                        icon.classList.toggle('is-active');
+                    }
+                });
+            }
+        }
+
+        async function fetchAndRenderCommands() {
+            loader.style.display = 'block';
+            commandsContainer.innerHTML = '';
+            try {
+                const commands = await apiFetch('/commands');
+                renderGroupedCommands(commands);
+            } catch (error) {
+                console.error(error);
+                commandsContainer.innerHTML = `<div class="notification is-danger">載入指令列表失敗: ${error.message}</div>`;
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function showLogin() {
+            mainSection.style.display = 'none';
+            loginSection.style.display = 'block';
+        }
+
+        function showMain() {
+            loginSection.style.display = 'none';
+            mainSection.style.display = 'block';
+            fetchAndRenderCommands();
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const token = tokenInput.value.trim();
+            if (!token) return;
+
+            loginButton.classList.add('is-loading');
+
+            try {
+                sessionStorage.setItem('authToken', token);
+                await apiFetch('/verify');
+                showToast('登入成功！', 'is-success');
+                showMain();
+            } catch (error) {
+                console.error('Login failed:', error);
+                sessionStorage.removeItem('authToken');
+            } finally {
+                loginButton.classList.remove('is-loading');
+            }
+        }
+
+        async function handleToggle(event) {
+            const checkbox = event.target;
+            if (checkbox.type !== 'checkbox') return;
+
+            const row = checkbox.closest('tr');
+            const handlerName = row.dataset.handler;
+            
+            checkbox.disabled = true;
+
+            try {
+                await apiFetch('/commands/toggle', {
+                    method: 'POST',
+                    body: JSON.stringify({ handler_full_name: handlerName }),
+                });
+                const status = checkbox.checked ? '啟用' : '禁用';
+                showToast(`指令已成功${status}。`, 'is-info');
+            } catch (error) {
+                console.error('Toggle failed:', error);
+                showToast(`操作失敗: ${error.message}`, 'is-danger');
+                checkbox.checked = !checkbox.checked; // Revert on failure
+            } finally {
+                checkbox.disabled = false;
+            }
+        }
+
+        async function handlePluginToggle(event) {
+            const button = event.target.closest('button[data-plugin]');
+            if (!button) return;
+
+            const pluginName = button.dataset.plugin;
+            const activate = button.dataset.action === 'enable';
+            
+            const card = button.closest('.card');
+            if (!card) return;
+
+            const buttons = card.querySelectorAll('.card-header-icon .buttons button');
+            buttons.forEach(btn => btn.classList.add('is-loading'));
+
+            try {
+                await apiFetch('/plugins/toggle', {
+                    method: 'POST',
+                    body: JSON.stringify({ plugin_name: pluginName, activate: activate }),
+                });
+                const status = activate ? '启用' : '禁用';
+                showToast(`插件 '${pluginName}' 的所有指令已成功${status}。`, 'is-info');
+
+                const checkboxes = card.querySelectorAll('.card-content input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = activate;
+                });
+
+            } catch (error) {
+                console.error('Plugin toggle failed:', error);
+                showToast(`操作失败: ${error.message}`, 'is-danger');
+            } finally {
+                buttons.forEach(btn => btn.classList.remove('is-loading'));
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('authToken');
+            showToast('已成功登出。', 'is-info');
+            showLogin();
+        }
+
+        async function init() {
+            const token = sessionStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await apiFetch('/verify');
+                    showMain();
+                } catch (error) { showLogin(); }
+            } else {
+                showLogin();
+            }
+
+            loginForm.addEventListener('submit', handleLogin);
+            logoutButton.addEventListener('click', handleLogout);
+            commandsContainer.addEventListener('change', handleToggle);
+            commandsContainer.addEventListener('click', handlePluginToggle);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
