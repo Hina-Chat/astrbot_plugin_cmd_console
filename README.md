@@ -27,11 +27,8 @@ Powered by Claude 4s & Gemini 2.5 Pro, All.
 
 ## 🚀 安装与设置
 
-1.  将 `astrbot_plugin_command_manager` 文件夹放入 AstrBot 的 `plugins` 目录下。
-2.  安装所需的依赖包：
-    ```bash
-    pip install -r requirements.txt
-    ```
+1.  下載 Code 為 ZIP；
+2.  插件管理 - 安裝插件，選擇下載的 ZIP
 
 ## 🛠️ 使用说明
 
