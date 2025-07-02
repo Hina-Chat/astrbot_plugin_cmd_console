@@ -27,11 +27,8 @@ Powered by Gemini 2.5 Pro, All.
 
 ## 🚀 安裝與設定
 
-1.  將 `astrbot_plugin_command_manager` 資料夾放入 AstrBot 的 `plugins` 目錄下。
-2.  安裝所需的依賴套件：
-    ```bash
-    pip install -r requirements.txt
-    ```
+1.  下載 Code 為 ZIP；
+2.  插件管理 - 安裝插件，選擇下載的 ZIP
 
 ## 🛠️ 使用說明
 
