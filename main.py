@@ -6,16 +6,9 @@ import uvicorn
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star
 from astrbot.core.star.filter.permission import PermissionType
 
-
-@register(
-    "astrbot_plugin_cmd_console",
-    "Magstic, Gemini 2.5 Pro",
-    "提供 WebUI 的指令管理面板，可以启用/禁用插件的指令。",
-    "1.0.0",
-)
 class CommandManagerPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)

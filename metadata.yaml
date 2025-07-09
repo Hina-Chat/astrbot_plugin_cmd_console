@@ -1,5 +1,5 @@
 name: astrbot_plugin_cmd_console
 desc: 提供 WebUI 的指令管理面板，可以启用/禁用插件的指令。
-version: v1.0.0
+version: v1.0.1
 author: Magstic, Gemini 2.5 Pro
 repo: https://github.com/Magstic/astrbot_plugin_cmd_console
