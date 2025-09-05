@@ -44,12 +44,18 @@ INACTIVATED_COMMANDS_KEY = "inactivated_command_handlers"
 
 # 4. 猴子补丁核心逻辑
 def _patched_get_handlers_on_class(
-    self, event_type: EventType, only_activated=True, platform_id=None
+    self,
+    event_type: EventType,
+    only_activated=True,
+    plugins_name: list[str] | None = None,
 ) -> list[StarHandler]:
     """我们注入的补丁函数，在类级别上替换原始方法"""
     # 首先，调用原始的、未绑定的函数，并手动传入 self
     original_handlers = _original_get_handlers_on_class(
-        self, event_type, only_activated=only_activated, platform_id=platform_id
+        self,
+        event_type,
+        only_activated=only_activated,
+        plugins_name=plugins_name,
     )
 
     # 如果没有禁用的指令，直接返回原始列表，提高性能
