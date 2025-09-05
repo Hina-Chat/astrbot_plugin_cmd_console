@@ -1,4 +1,5 @@
 import threading
+import inspect
 from typing import List, Dict, Optional, Callable
 
 from pydantic import BaseModel
@@ -40,6 +41,7 @@ class TogglePluginItem(BaseModel):
 _original_get_handlers_on_class: Optional[Callable] = None
 disabled_handlers_set: set[str] = set()
 INACTIVATED_COMMANDS_KEY = "inactivated_command_handlers"
+_original_params: set[str] = set()
 
 
 # 4. 猴子补丁核心逻辑
@@ -48,14 +50,30 @@ def _patched_get_handlers_on_class(
     event_type: EventType,
     only_activated=True,
     plugins_name: list[str] | None = None,
+    platform_id: Optional[str] = None,
 ) -> list[StarHandler]:
     """我们注入的补丁函数，在类级别上替换原始方法"""
     # 首先，调用原始的、未绑定的函数，并手动传入 self
+    # 根据原始方法签名，决定传递哪个可选参数（正式版: platform_id；预览版: plugins_name）
+    global _original_params
+    if not _original_params and _original_get_handlers_on_class is not None:
+        try:
+            _original_params = set(
+                inspect.signature(_original_get_handlers_on_class).parameters.keys()
+            )
+        except Exception:
+            _original_params = set()
+
+    kwargs = {"only_activated": only_activated}
+    if "plugins_name" in _original_params:
+        kwargs["plugins_name"] = plugins_name
+    elif "platform_id" in _original_params:
+        kwargs["platform_id"] = platform_id
+
     original_handlers = _original_get_handlers_on_class(
         self,
         event_type,
-        only_activated=only_activated,
-        plugins_name=plugins_name,
+        **kwargs,
     )
 
     # 如果没有禁用的指令，直接返回原始列表，提高性能
@@ -79,6 +97,14 @@ def apply_patch():
     if _original_get_handlers_on_class is None:
         # 从类本身备份原始函数
         _original_get_handlers_on_class = StarHandlerRegistry.get_handlers_by_event_type
+        # 缓存原始方法的参数名集合，用于兼容不同版本
+        global _original_params
+        try:
+            _original_params = set(
+                inspect.signature(_original_get_handlers_on_class).parameters.keys()
+            )
+        except Exception:
+            _original_params = set()
         # 在类本身上替换为我们的补丁函数
         StarHandlerRegistry.get_handlers_by_event_type = _patched_get_handlers_on_class
         logger.info("指令管理器：已成功应用猴子补丁到 StarHandlerRegistry CLASS。")
